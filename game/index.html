@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Emberwake — a descent to rekindle the dawn</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #07070d;
+    min-height: 100%;
+  }
+  body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    font-family: system-ui, sans-serif;
+  }
+  canvas {
+    display: block;
+    width: min(100vw, 177.78vh);
+    height: auto;
+    aspect-ratio: 16 / 9;
+    background: #0a0a16;
+    box-shadow: 0 0 90px rgba(255, 150, 60, 0.13), 0 0 0 1px rgba(255, 196, 107, 0.16);
+    touch-action: none;
+    cursor: crosshair;
+  }
+</style>
+</head>
+<body>
+<canvas id="game" width="1280" height="720"></canvas>
+<noscript><p style="color:#e8ecff;text-align:center">Emberwake needs JavaScript to fall.</p></noscript>
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>
