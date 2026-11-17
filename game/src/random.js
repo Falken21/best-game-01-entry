@@ -1,50 +1,33 @@
-// Emberwake — a small seeded random number generator.
-// All gameplay randomness flows through one of these, so a run with a
-// known seed replays exactly: playtests, screenshot scenes and bug
-// reports all stay reproducible.
+// Seeded RNG (mulberry32). All gameplay randomness flows through here
+// so a run is deterministic for a given seed.
+export function mulberry32(seed) {
+  let a = (seed >>> 0) || 1;
+  return function next() {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
 
 export class Rng {
   constructor(seed) {
-    // mulberry32 state; any 32-bit seed works, 0 included.
-    this.state = (seed >>> 0) || 0x9e3779b9;
+    this.next = mulberry32(seed);
+    this.seed = seed;
   }
-
-  next() {
-    this.state = (this.state + 0x6d2b79f5) >>> 0;
-    let t = this.state;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  }
-
-  range(min, max) {
-    return min + this.next() * (max - min);
-  }
-
-  int(min, max) {
-    return Math.floor(this.range(min, max + 1));
-  }
-
-  pick(list) {
-    return list[Math.floor(this.next() * list.length)];
-  }
-
-  chance(p) {
-    return this.next() < p;
-  }
-
-  sign() {
-    return this.next() < 0.5 ? -1 : 1;
-  }
+  float() { return this.next(); }
+  range(lo, hi) { return lo + this.next() * (hi - lo); }
+  int(lo, hi) { return Math.floor(this.range(lo, hi + 1)); }
+  pick(arr) { return arr[Math.floor(this.next() * arr.length) % arr.length]; }
+  chance(p) { return this.next() < p; }
 }
 
-// Turn a short string into a 32-bit seed (FNV-1a), so screenshot
-// scenes can be named instead of numbered.
-export function seedFromText(text) {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < text.length; i++) {
-    h ^= text.charCodeAt(i);
-    h = Math.imul(h, 0x01000193);
+export function seedFromUrl(fallback) {
+  try {
+    const raw = new URLSearchParams(window.location.search).get('seed');
+    const n = raw === null ? NaN : parseInt(raw, 10);
+    return Number.isFinite(n) ? n : fallback;
+  } catch (e) {
+    return fallback;
   }
-  return h >>> 0;
 }

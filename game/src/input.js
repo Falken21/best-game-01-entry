@@ -1,81 +1,54 @@
-// Emberwake — keyboard and pointer input.
-// The game reads intent, not devices: a steering axis from the keys,
-// a pointer the ember can lean toward, and a queue of key presses
-// that menus and state changes consume once each.
-
-const STEER_KEYS = {
-  ArrowLeft: [-1, 0], KeyA: [-1, 0],
-  ArrowRight: [1, 0], KeyD: [1, 0],
-  ArrowUp: [0, -1], KeyW: [0, -1],
-  ArrowDown: [0, 1], KeyS: [0, 1],
-};
-
+// Keyboard (arrows / WASD), mouse steering, and action keys.
 export class Input {
   constructor(canvas) {
+    this.keys = new Set();
+    this.mouseX = null;
+    this.mouseY = null;
+    this.mouseDown = false;
+    this.pressed = new Set();
     this.canvas = canvas;
-    this.held = new Set();
-    this.presses = [];
-    this.pointer = { x: 0, y: 0, active: false, down: false };
-    this.anyGesture = false;
-
     window.addEventListener('keydown', (e) => {
-      if (STEER_KEYS[e.code] || e.code === 'Space') e.preventDefault();
-      if (!e.repeat) {
-        this.held.add(e.code);
-        this.presses.push(e.code);
-        this.anyGesture = true;
-      }
+      const k = e.key.toLowerCase();
+      if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '].includes(k)) e.preventDefault();
+      if (!this.keys.has(k)) this.pressed.add(k);
+      this.keys.add(k);
     });
-    window.addEventListener('keyup', (e) => this.held.delete(e.code));
-    window.addEventListener('blur', () => this.held.clear());
-
-    canvas.addEventListener('pointermove', (e) => {
-      const p = this.toGameCoords(e);
-      this.pointer.x = p.x;
-      this.pointer.y = p.y;
-      this.pointer.active = true;
+    window.addEventListener('keyup', (e) => { this.keys.delete(e.key.toLowerCase()); });
+    window.addEventListener('blur', () => { this.keys.clear(); this.mouseDown = false; });
+    canvas.addEventListener('mousemove', (e) => {
+      const r = canvas.getBoundingClientRect();
+      this.mouseX = (e.clientX - r.left) * (canvas.width / r.width);
+      this.mouseY = (e.clientY - r.top) * (canvas.height / r.height);
     });
-    canvas.addEventListener('pointerdown', (e) => {
-      const p = this.toGameCoords(e);
-      this.pointer.x = p.x;
-      this.pointer.y = p.y;
-      this.pointer.active = true;
-      this.pointer.down = true;
-      this.anyGesture = true;
-      this.presses.push('PointerDown');
-    });
-    window.addEventListener('pointerup', () => { this.pointer.down = false; });
-    canvas.addEventListener('pointerleave', () => { this.pointer.active = false; });
+    canvas.addEventListener('mousedown', () => { this.mouseDown = true; this.pressed.add('click'); });
+    window.addEventListener('mouseup', () => { this.mouseDown = false; });
+    canvas.addEventListener('touchstart', (e) => {
+      const t = e.touches[0]; if (!t) return;
+      const r = canvas.getBoundingClientRect();
+      this.mouseX = (t.clientX - r.left) * (canvas.width / r.width);
+      this.mouseY = (t.clientY - r.top) * (canvas.height / r.height);
+      this.pressed.add('click');
+    }, { passive: true });
+    canvas.addEventListener('touchmove', (e) => {
+      const t = e.touches[0]; if (!t) return;
+      const r = canvas.getBoundingClientRect();
+      this.mouseX = (t.clientX - r.left) * (canvas.width / r.width);
+      this.mouseY = (t.clientY - r.top) * (canvas.height / r.height);
+    }, { passive: true });
   }
-
-  toGameCoords(e) {
-    const rect = this.canvas.getBoundingClientRect();
-    return {
-      x: (e.clientX - rect.left) * (this.canvas.width / rect.width),
-      y: (e.clientY - rect.top) * (this.canvas.height / rect.height),
-    };
+  down(...names) { return names.some((n) => this.keys.has(n)); }
+  axisX() {
+    let a = 0;
+    if (this.down('arrowleft', 'a')) a -= 1;
+    if (this.down('arrowright', 'd')) a += 1;
+    return a;
   }
-
-  // Steering axis from held keys, normalised so diagonals are fair.
-  axis() {
-    let x = 0, y = 0;
-    for (const code of this.held) {
-      const v = STEER_KEYS[code];
-      if (v) { x += v[0]; y += v[1]; }
-    }
-    const len = Math.hypot(x, y);
-    if (len > 1) { x /= len; y /= len; }
-    return { x, y };
+  axisY() {
+    let a = 0;
+    if (this.down('arrowup', 'w')) a -= 1;
+    if (this.down('arrowdown', 's')) a += 1;
+    return a;
   }
-
-  // Take the presses gathered since the last call; each is read once.
-  takePresses() {
-    const out = this.presses;
-    this.presses = [];
-    return out;
-  }
-
-  pressed(code) {
-    return this.presses.includes(code);
-  }
+  wasPressed(...names) { return names.some((n) => this.pressed.has(n)); }
+  endFrame() { this.pressed.clear(); }
 }

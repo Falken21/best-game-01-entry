@@ -4,38 +4,48 @@
 [![rank](https://make.fun/badge/best-game-01/Falken21/best-game-01-entry/rank.svg)](https://make.fun/bounty/best-game-01/leaderboard?utm_source=github&utm_medium=readme&utm_campaign=best-game-01)
 [![reward](https://make.fun/badge/best-game-01/Falken21/best-game-01-entry/reward.svg)](https://make.fun/bounty/best-game-01?utm_source=github&utm_medium=readme&utm_campaign=best-game-01)
 
-A descent arcade game for make.fun's **best-game-01**. You are the last
-ember of a drowned sun. Fall through a three-zone chasm, gather sparks to
-keep your light alive, kindle the seven braziers, and reach the Dawn Gate
-before the dark takes you.
+Emberwake is a descent arcade game in plain JavaScript and Canvas 2D — no
+libraries, no assets, no build step. You are the last ember of a drowned
+sun, falling through a three-zone chasm: the Drowned Halls, the Cinder
+Deep, and the Throat of Night. Your light is your fuel and it drains as
+you fall. Gather sparks to keep it alive, kindle the seven braziers, and
+steer into the Dawn Gate before the dark takes you.
 
-## Play
+## How to play
 
-Serve `game/` with any static file server and open `index.html` in a
-desktop browser — no build step, no network requests.
+- **Steer** with the arrow keys, WASD, or the mouse.
+- **Start / restart:** Enter, Space, or click.
+- **Pause:** P or Esc. **Mute:** M.
+- Sparks replenish your light and build your combo. Shards and wisps cost
+  a heart on contact — three hits, or an empty light, ends the run.
+- Kindling all seven braziers opens the Dawn Gate. Reaching it wins the
+  descent, graded C to S from your time, sparks, and remaining hearts.
 
-- **Steer:** arrow keys, WASD, or the mouse
-- **Start / restart:** Enter, Space, or click
-- **Pause:** P or Esc · **Mute:** M
+## How to run it
 
-Light is fuel: it burns away as you fall and sparks feed it. Shards and
-wisps cost hearts; three hits, or an empty light, end the run. Kindling
-all seven braziers opens the Dawn Gate and wins the descent, with a grade
-from C to S.
+Serve the `game/` folder with any static file server and open
+`index.html` in a desktop browser — the game plays fully offline:
 
-## Layout
+```sh
+python3 -m http.server 8000 --directory game
+# then open http://localhost:8000/
+```
 
-- `main.ts` — the hand-in program: copies `game/` and `screenshots/` to
-  the output directory and writes `dossier.json` via
-  `vendor/makefun-game.ts` (the kit's library, unchanged).
-- `game/src/` — the game, one job per file: `config` (tuning and zone
-  palettes), `random` (seeded RNG), `input`, `audio` (synthesized
-  WebAudio sound), `world` (spawning and the chasm), `entities` (the
-  ember, particles, floating text), `render` (canvas drawing, HUD and
-  screens), `shots` (deterministic screenshot scenes), `main` (state
-  machine, loop, collisions, scoring).
-- `screenshots/` — renders of the game itself, taken from
-  `game/index.html?shot=<scene>&seed=<n>` scenes.
+Deterministic screenshot scenes are available for review by adding a
+query string, for example `index.html?shot=descent&seed=7` (scenes:
+`descent`, `title`, `kindle`, `victory`). All gameplay randomness flows
+through a seeded RNG, so a run is reproducible for a given seed.
+
+## Handing it in
+
+```sh
+node main.ts
+```
+
+This copies `game/` and `screenshots/` into the output directory
+(`$MAKEFUN_OUTPUT_DIR`, default `/output`) and writes `dossier.json`
+there using the vendored make.fun helper. It never deletes anything in
+the output directory.
 
 ## License
 
